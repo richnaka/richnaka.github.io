@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrizePicks EV Sniper v2.3</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #121212; padding: 20px; color: #f1f1f1; }
+        .container { max-width: 550px; margin: 0 auto; background: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #4A90E2; margin-top: 0; font-size: 24px; }
+        label { font-weight: 600; margin-top: 15px; display: block; font-size: 13px; color: #a0a0a0; text-transform: uppercase; letter-spacing: 0.5px; }
+        select, input { width: 100%; padding: 12px; margin-top: 6px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        select:focus, input:focus { outline: none; border-color: #4A90E2; }
+        button { width: 100%; padding: 16px; margin-top: 25px; background-color: #4A90E2; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
+        button:hover { background-color: #357ABD; }
+        .result-box { margin-top: 25px; padding: 15px; border-radius: 8px; display: none; background: #121212; border: 1px solid #333; }
+        .result-item { margin: 10px 0; padding: 15px; border-radius: 6px; text-align: center; display: flex; flex-direction: column; gap: 5px; }
+        .grade { font-size: 20px; font-weight: 900; letter-spacing: 1px; }
+        .pct { font-size: 15px; font-weight: 500; opacity: 0.9; }
+        .smash { background-color: #0b3d21; color: #74c69d; border: 1px solid #1b5e3a; }
+        .take { background-color: #4a3f12; color: #f4d35e; border: 1px solid #7a6a24; }
+        .pass { background-color: #3d1010; color: #ff8fa3; border: 1px solid #6b1d1d; }
+        .toggle-container { margin-top: 20px; display: flex; align-items: center; gap: 8px; }
+        .toggle-container input { width: auto; margin: 0; cursor: pointer; }
+        .toggle-container label { margin: 0; text-transform: none; font-size: 14px; color: #4A90E2; cursor: pointer; }
+        .secondary-box { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #333; }
+        .section-title { font-size: 12px; color: #4A90E2; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🎯 EV Sniper v2.3</h2>
+    
+    <label>Stat Category (Exact Number Push Rate)</label>
+    <select id="category">
+        <option value="0.05">5% Push Rate - Wide Variance (NBA PRA/PA/PR/RA, Match Total Tennis Games)</option>
+        <option value="0.07">7% Push Rate - High Volume (NBA Points, Player Total Tennis Games)</option>
+        <option value="0.11">11% Push Rate - Mid Volume (NBA Reb/Ast, Golf Pars, Tennis Aces)</option>
+        <option value="0.14">14% Push Rate - Tight Variance (Golf Round Score)</option>
+        <option value="0.16">16% Push Rate - Low Volume (MLB Strikeouts, Golf Birdies)</option>
+        <option value="0.22">22% Push Rate - Ultra-Tight Variance (NBA 3PM, Tennis Double Faults)</option>
+    </select>
+    <label>PrizePicks Line Target</label>
+    <input type="number" id="ppLine" step="0.5" placeholder="e.g. 19.5">
+
+    <!-- PRIMARY BOOK -->
+    <div style="margin-top: 20px;">
+        <div class="section-title">Primary Sportsbook (e.g., FanDuel)</div>
+        <div style="display: flex; gap: 15px;">
+            <div style="flex: 1;">
+                <label>Book 1 Line</label>
+                <input type="number" id="fdLine" step="0.5" placeholder="e.g. 20.5">
+            </div>
+            <div style="flex: 1;">
+                <label>Over Odds</label>
+                <input type="number" id="fdOver" placeholder="e.g. -115">
+            </div>
+            <div style="flex: 1;">
+                <label>Under Odds</label>
+                <input type="number" id="fdUnder" placeholder="e.g. -115">
+            </div>
+        </div>
+    </div>
+
+    <!-- TOGGLE FOR SECONDARY BOOK -->
+    <div class="toggle-container">
+        <input type="checkbox" id="useSecondary" onchange="toggleSecondarySection()">
+        <label for="useSecondary">➕ Factor in a Secondary Sportsbook (e.g., DraftKings)</label>
+    </div>
+
+    <!-- SECONDARY BOOK (OPTIONAL) -->
+    <div id="secondarySection" class="secondary-box">
+        <div class="section-title">Secondary Sportsbook</div>
+        <div style="display: flex; gap: 15px;">
+            <div style="flex: 1;">
+                <label>Book 2 Line</label>
+                <input type="number" id="sbLine" step="0.5" placeholder="e.g. 20.5">
+            </div>
+            <div style="flex: 1;">
+                <label>Over Odds</label>
+                <input type="number" id="sbOver" placeholder="e.g. -110">
+            </div>
+            <div style="flex: 1;">
+                <label>Under Odds</label>
+                <input type="number" id="sbUnder" placeholder="e.g. -120">
+            </div>
+        </div>
+    </div>
+
+    <button onclick="calculateEdge()">CALCULATE CONSENSUS EDGE</button>
+
+    <div class="result-box" id="resultBox">
+        <h4 style="margin: 0 0 15px 0; text-align: center; color: #aaa;">Consensus True Win Probability</h4>
+        <div id="overDiv" class="result-item"></div>
+        <div id="underDiv" class="result-item"></div>
+    </div>
+</div>
+
+<script>
+    function toggleSecondarySection() {
+        const checkbox = document.getElementById('useSecondary');
+        const section = document.getElementById('secondarySection');
+        section.style.display = checkbox.checked ? 'block' : 'none';
+    }
+
+    // Helper function to convert American Odds to Implied Probability
+    function getImplied(odds) {
+        if (odds < 0) return Math.abs(odds) / (Math.abs(odds) + 100);
+        if (odds > 0) return 100 / (odds + 100);
+        return 0; 
+    }
+
+    // Helper function to assign HTML formatting based on Win Percentage
+    function formatResult(side, line, winPct) {
+        let gradeText, cssClass;
+        
+        if (winPct >= 56.5) {
+            gradeText = `🔥 SMASH ${side} ${line}`;
+            cssClass = 'smash';
+        } else if (winPct >= 54.3) {
+            gradeText = `✅ TAKE IT: ${side} ${line}`;
+            cssClass = 'take';
+        } else {
+            gradeText = `❌ PASS: ${side} ${line}`;
+            cssClass = 'pass';
+        }
+
+        return {
+            html: `<div class="grade">${gradeText}</div><div class="pct">${winPct.toFixed(1)}% True Win Probability</div>`,
+            cssClass: cssClass
+        };
+    }
+
+    function calculateEdge() {
+        const exactProb = parseFloat(document.getElementById('category').value);
+        const ppLine = parseFloat(document.getElementById('ppLine').value);
+        
+        // Book 1 Inputs
+        const fdLine = parseFloat(document.getElementById('fdLine').value);
+        const fdOver = parseInt(document.getElementById('fdOver').value);
+        const fdUnder = parseInt(document.getElementById('fdUnder').value);
+
+        if (isNaN(ppLine) || isNaN(fdLine) || isNaN(fdOver) || isNaN(fdUnder)) {
+            alert("Please fill in PrizePicks and Primary Sportsbook inputs.");
+            return;
+        }
+
+        // 1. Book 1 Calculation
+        const impOver1 = getImplied(fdOver);
+        const impUnder1 = getImplied(fdUnder);
+        const totalImp1 = impOver1 + impUnder1;
+        
+        const trueOver1 = impOver1 / totalImp1;
+        const trueUnder1 = impUnder1 / totalImp1;
+
+        const diff1 = ppLine - fdLine;
+        const shiftAmount1 = exactProb * Math.abs(diff1);
+
+        let finalOver1 = 0;
+        let finalUnder1 = 0;
+
+        if (diff1 === 0) {
+            finalOver1 = trueOver1;
+            finalUnder1 = trueUnder1;
+        } else if (diff1 < 0) {
+            finalOver1 = trueOver1 + shiftAmount1;
+            finalUnder1 = trueUnder1 - shiftAmount1;
+        } else {
+            finalOver1 = trueOver1 - shiftAmount1;
+            finalUnder1 = trueUnder1 + shiftAmount1;
+        }
+
+        let consensusOver = finalOver1;
+        let consensusUnder = finalUnder1;
+
+        // 2. Optional Book 2 Calculation
+        const useSecondary = document.getElementById('useSecondary').checked;
+        if (useSecondary) {
+            const sbLine = parseFloat(document.getElementById('sbLine').value);
+            const sbOver = parseInt(document.getElementById('sbOver').value);
+            const sbUnder = parseInt(document.getElementById('sbUnder').value);
+
+            if (isNaN(sbLine) || isNaN(sbOver) || isNaN(sbUnder)) {
+                alert("Please complete all fields for the Secondary Sportsbook or uncheck the option.");
+                return;
+            }
+
+            const impOver2 = getImplied(sbOver);
+            const impUnder2 = getImplied(sbUnder);
+            const totalImp2 = impOver2 + impUnder2;
+            
+            const trueOver2 = impOver2 / totalImp2;
+            const trueUnder2 = impUnder2 / totalImp2;
+
+            const diff2 = ppLine - sbLine;
+            const shiftAmount2 = exactProb * Math.abs(diff2);
+
+            let finalOver2 = 0;
+            let finalUnder2 = 0;
+
+            if (diff2 === 0) {
+                finalOver2 = trueOver2;
+                finalUnder2 = trueUnder2;
+            } else if (diff2 < 0) {
+                finalOver2 = trueOver2 + shiftAmount2;
+                finalUnder2 = trueUnder2 - shiftAmount2;
+            } else {
+                finalOver2 = trueOver2 - shiftAmount2;
+                finalUnder2 = trueUnder2 + shiftAmount2;
+            }
+
+            // Blend probabilities equally (Market Consensus)
+            consensusOver = (finalOver1 + finalOver2) / 2;
+            consensusUnder = (finalUnder1 + finalUnder2) / 2;
+        }
+
+        // 3. Convert to Percentages
+        const overPct = consensusOver * 100;
+        const underPct = consensusUnder * 100;
+
+        // 4. Render to UI
+        const resultBox = document.getElementById('resultBox');
+        const overDiv = document.getElementById('overDiv');
+        const underDiv = document.getElementById('underDiv');
+
+        const overRender = formatResult("OVER", ppLine, overPct);
+        const underRender = formatResult("UNDER", ppLine, underPct);
+
+        overDiv.className = `result-item ${overRender.cssClass}`;
+        overDiv.innerHTML = overRender.html;
+
+        underDiv.className = `result-item ${underRender.cssClass}`;
+        underDiv.innerHTML = underRender.html;
+
+        resultBox.style.display = 'block';
+    }
+</script>
+</body>
+</html>
