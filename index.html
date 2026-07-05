@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrizePicks EV Sniper v2.3</title>
+    <title>PrizePicks EV Sniper v2.4</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #121212; padding: 20px; color: #f1f1f1; }
         .container { max-width: 550px; margin: 0 auto; background: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -25,13 +24,15 @@
         .toggle-container input { width: auto; margin: 0; cursor: pointer; }
         .toggle-container label { margin: 0; text-transform: none; font-size: 14px; color: #4A90E2; cursor: pointer; }
         .secondary-box { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #333; }
-        .section-title { font-size: 12px; color: #4A90E2; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: bold; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .section-title { font-size: 12px; color: #4A90E2; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin: 0; }
+        .format-select { width: auto; padding: 4px 8px; font-size: 12px; margin: 0; background: #121212; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🎯 EV Sniper v2.3</h2>
+    <h2>🎯 EV Sniper v2.4</h2>
     
     <label>Stat Category (Exact Number Push Rate)</label>
     <select id="category">
@@ -42,12 +43,19 @@
         <option value="0.16">16% Push Rate - Low Volume (MLB Strikeouts, Golf Birdies)</option>
         <option value="0.22">22% Push Rate - Ultra-Tight Variance (NBA 3PM, Tennis Double Faults)</option>
     </select>
+    
     <label>PrizePicks Line Target</label>
     <input type="number" id="ppLine" step="0.5" placeholder="e.g. 19.5">
 
     <!-- PRIMARY BOOK -->
     <div style="margin-top: 20px;">
-        <div class="section-title">Primary Sportsbook (e.g., FanDuel)</div>
+        <div class="section-header">
+            <div class="section-title">Primary Sportsbook (e.g., FanDuel)</div>
+            <select id="fdFormat" class="format-select" onchange="updatePlaceholders('fd')">
+                <option value="american">American (+/-)</option>
+                <option value="decimal">Decimal (e.g., 1.90)</option>
+            </select>
+        </div>
         <div style="display: flex; gap: 15px;">
             <div style="flex: 1;">
                 <label>Book 1 Line</label>
@@ -55,11 +63,11 @@
             </div>
             <div style="flex: 1;">
                 <label>Over Odds</label>
-                <input type="number" id="fdOver" placeholder="e.g. -115">
+                <input type="number" step="any" id="fdOver" placeholder="e.g. -115">
             </div>
             <div style="flex: 1;">
                 <label>Under Odds</label>
-                <input type="number" id="fdUnder" placeholder="e.g. -115">
+                <input type="number" step="any" id="fdUnder" placeholder="e.g. -115">
             </div>
         </div>
     </div>
@@ -67,12 +75,18 @@
     <!-- TOGGLE FOR SECONDARY BOOK -->
     <div class="toggle-container">
         <input type="checkbox" id="useSecondary" onchange="toggleSecondarySection()">
-        <label for="useSecondary">➕ Factor in a Secondary Sportsbook (e.g., DraftKings)</label>
+        <label for="useSecondary">➕ Factor in a Secondary Sportsbook (e.g., Pinnacle)</label>
     </div>
 
     <!-- SECONDARY BOOK (OPTIONAL) -->
     <div id="secondarySection" class="secondary-box">
-        <div class="section-title">Secondary Sportsbook</div>
+        <div class="section-header">
+            <div class="section-title">Secondary Sportsbook</div>
+            <select id="sbFormat" class="format-select" onchange="updatePlaceholders('sb')">
+                <option value="american">American (+/-)</option>
+                <option value="decimal" selected>Decimal (e.g., 1.90)</option>
+            </select>
+        </div>
         <div style="display: flex; gap: 15px;">
             <div style="flex: 1;">
                 <label>Book 2 Line</label>
@@ -80,11 +94,11 @@
             </div>
             <div style="flex: 1;">
                 <label>Over Odds</label>
-                <input type="number" id="sbOver" placeholder="e.g. -110">
+                <input type="number" step="any" id="sbOver" placeholder="e.g. 1.85">
             </div>
             <div style="flex: 1;">
                 <label>Under Odds</label>
-                <input type="number" id="sbUnder" placeholder="e.g. -120">
+                <input type="number" step="any" id="sbUnder" placeholder="e.g. 1.95">
             </div>
         </div>
     </div>
@@ -105,11 +119,31 @@
         section.style.display = checkbox.checked ? 'block' : 'none';
     }
 
-    // Helper function to convert American Odds to Implied Probability
-    function getImplied(odds) {
-        if (odds < 0) return Math.abs(odds) / (Math.abs(odds) + 100);
-        if (odds > 0) return 100 / (odds + 100);
-        return 0; 
+    function updatePlaceholders(prefix) {
+        const format = document.getElementById(`${prefix}Format`).value;
+        const overInput = document.getElementById(`${prefix}Over`);
+        const underInput = document.getElementById(`${prefix}Under`);
+        
+        if (format === 'american') {
+            overInput.placeholder = "e.g. -115";
+            underInput.placeholder = "e.g. -115";
+        } else {
+            overInput.placeholder = "e.g. 1.90";
+            underInput.placeholder = "e.g. 1.90";
+        }
+    }
+
+    // Updated Helper function to handle both American and Decimal Odds
+    function getImplied(odds, format) {
+        if (format === 'decimal') {
+            // Decimal odds implied probability = 1 / decimal_odds
+            return 1 / odds;
+        } else {
+            // American odds implied probability
+            if (odds < 0) return Math.abs(odds) / (Math.abs(odds) + 100);
+            if (odds > 0) return 100 / (odds + 100);
+            return 0; 
+        }
     }
 
     // Helper function to assign HTML formatting based on Win Percentage
@@ -139,8 +173,9 @@
         
         // Book 1 Inputs
         const fdLine = parseFloat(document.getElementById('fdLine').value);
-        const fdOver = parseInt(document.getElementById('fdOver').value);
-        const fdUnder = parseInt(document.getElementById('fdUnder').value);
+        const fdOver = parseFloat(document.getElementById('fdOver').value); // Changed to parseFloat for decimals
+        const fdUnder = parseFloat(document.getElementById('fdUnder').value);
+        const fdFormat = document.getElementById('fdFormat').value;
 
         if (isNaN(ppLine) || isNaN(fdLine) || isNaN(fdOver) || isNaN(fdUnder)) {
             alert("Please fill in PrizePicks and Primary Sportsbook inputs.");
@@ -148,8 +183,8 @@
         }
 
         // 1. Book 1 Calculation
-        const impOver1 = getImplied(fdOver);
-        const impUnder1 = getImplied(fdUnder);
+        const impOver1 = getImplied(fdOver, fdFormat);
+        const impUnder1 = getImplied(fdUnder, fdFormat);
         const totalImp1 = impOver1 + impUnder1;
         
         const trueOver1 = impOver1 / totalImp1;
@@ -179,16 +214,17 @@
         const useSecondary = document.getElementById('useSecondary').checked;
         if (useSecondary) {
             const sbLine = parseFloat(document.getElementById('sbLine').value);
-            const sbOver = parseInt(document.getElementById('sbOver').value);
-            const sbUnder = parseInt(document.getElementById('sbUnder').value);
+            const sbOver = parseFloat(document.getElementById('sbOver').value);
+            const sbUnder = parseFloat(document.getElementById('sbUnder').value);
+            const sbFormat = document.getElementById('sbFormat').value;
 
             if (isNaN(sbLine) || isNaN(sbOver) || isNaN(sbUnder)) {
                 alert("Please complete all fields for the Secondary Sportsbook or uncheck the option.");
                 return;
             }
 
-            const impOver2 = getImplied(sbOver);
-            const impUnder2 = getImplied(sbUnder);
+            const impOver2 = getImplied(sbOver, sbFormat);
+            const impUnder2 = getImplied(sbUnder, sbFormat);
             const totalImp2 = impOver2 + impUnder2;
             
             const trueOver2 = impOver2 / totalImp2;
