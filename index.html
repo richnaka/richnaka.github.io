@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrizePicks EV Sniper v2.4</title>
+    <title>PrizePicks EV Sniper v3.1</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background-color: #121212; padding: 20px; color: #f1f1f1; }
-        .container { max-width: 550px; margin: 0 auto; background: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h2 { text-align: center; color: #4A90E2; margin-top: 0; font-size: 24px; }
+        .container { max-width: 680px; margin: 0 auto; background: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: #4A90E2; margin-top: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+        .subtitle { text-align: center; color: #888; font-size: 12px; margin-top: -15px; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
         label { font-weight: 600; margin-top: 15px; display: block; font-size: 13px; color: #a0a0a0; text-transform: uppercase; letter-spacing: 0.5px; }
-        select, input { width: 100%; padding: 12px; margin-top: 6px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        select, input { width: 100%; padding: 12px; margin-top: 6px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         select:focus, input:focus { outline: none; border-color: #4A90E2; }
         button { width: 100%; padding: 16px; margin-top: 25px; background-color: #4A90E2; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
         button:hover { background-color: #357ABD; }
@@ -20,54 +21,71 @@
         .smash { background-color: #0b3d21; color: #74c69d; border: 1px solid #1b5e3a; }
         .take { background-color: #4a3f12; color: #f4d35e; border: 1px solid #7a6a24; }
         .pass { background-color: #3d1010; color: #ff8fa3; border: 1px solid #6b1d1d; }
+        .warning-box { background-color: #4a3f12; color: #f4d35e; border: 1px solid #7a6a24; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; text-align: center; line-height: 1.4; display: none; }
         .toggle-container { margin-top: 20px; display: flex; align-items: center; gap: 8px; }
         .toggle-container input { width: auto; margin: 0; cursor: pointer; }
-        .toggle-container label { margin: 0; text-transform: none; font-size: 14px; color: #4A90E2; cursor: pointer; }
+        .toggle-container label { margin: 0; text-transform: none; font-size: 14px; color: #4A90E2; cursor: pointer; font-weight: bold; }
         .secondary-box { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #333; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .section-title { font-size: 12px; color: #4A90E2; text-transform: uppercase; letter-spacing: 1px; font-weight: bold; margin: 0; }
-        .format-select { width: auto; padding: 4px 8px; font-size: 12px; margin: 0; background: #121212; }
+        .section-title { font-size: 12px; color: #4A90E2; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; font-weight: bold; }
+        .format-select { width: 100%; padding: 8px; margin-top: 5px; background: #333; border: 1px solid #555; color: white; border-radius: 4px; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🎯 EV Sniper v2.4</h2>
+    <h2>🎯 EV Sniper v3.1</h2>
+    <div class="subtitle">Trap Detector & Master Audit Math</div>
     
-    <label>Stat Category (Exact Number Push Rate)</label>
+    <label>Stat Category (Conservative Push Rate)</label>
     <select id="category">
-        <option value="0.05">5% Push Rate - Wide Variance (NBA PRA/PA/PR/RA, Match Total Tennis Games)</option>
-        <option value="0.07">7% Push Rate - High Volume (NBA Points, Player Total Tennis Games)</option>
-        <option value="0.11">11% Push Rate - Mid Volume (NBA Reb/Ast, Golf Pars, Tennis Aces)</option>
-        <option value="0.14">14% Push Rate - Tight Variance (Golf Round Score)</option>
-        <option value="0.16">16% Push Rate - Low Volume (MLB Strikeouts, Golf Birdies)</option>
-        <option value="0.22">22% Push Rate - Ultra-Tight Variance (NBA 3PM, Tennis Double Faults)</option>
+        <!-- 5.0% to 10.0% Tiers (Wide Variance / Large Totals) -->
+        <option value="0.050">5.0% - WNBA PRA</option>
+        <option value="0.055">5.5% - Tennis Match Games (5-Set Men)</option>
+        <option value="0.060">6.0% - WNBA PR, PA, RA</option>
+        <option value="0.070">7.0% - WNBA Points</option>
+        <option value="0.090">9.0% - Tennis Match Games (3-Set Women)</option>
+        <option value="0.100">10.0% - Tennis Player Games (5-Set Men)</option>
+        
+        <!-- 11.0% to 15.0% Tiers (Mid Variance) -->
+        <option value="0.110">11.0% - Tennis Aces (Men)</option>
+        <option value="0.130">13.0% - WNBA Rebounds</option>
+        <option value="0.140">14.0% - Golf Total Strokes, Tennis Player Games (3-Set Women)</option>
+        <option value="0.150">15.0% - WNBA Assists</option>
+        
+        <!-- 16.5% to 21.0% Tiers (Tight Variance) -->
+        <option value="0.165">16.5% - MLB Pitcher Strikeouts</option>
+        <option value="0.180">18.0% - MLB Pitcher Hits Allowed</option>
+        <option value="0.190">19.0% - Golf Birdies, Golf Bogeys, Tennis Aces (Women)</option>
+        <option value="0.200">20.0% - Golf Pars</option>
+        <option value="0.210">21.0% - MLB Total Bases</option>
+        
+        <!-- 24.0%+ Tiers (Micro-Stats / Poisson Math) -->
+        <option value="0.240">24.0% - WNBA 3PM, MLB Earned Runs</option>
+        <option value="0.300">30.0% - MLB Batter Singles</option>
     </select>
-    
+
     <label>PrizePicks Line Target</label>
     <input type="number" id="ppLine" step="0.5" placeholder="e.g. 19.5">
 
     <!-- PRIMARY BOOK -->
     <div style="margin-top: 20px;">
-        <div class="section-header">
-            <div class="section-title">Primary Sportsbook (e.g., FanDuel)</div>
-            <select id="fdFormat" class="format-select" onchange="updatePlaceholders('fd')">
-                <option value="american">American (+/-)</option>
-                <option value="decimal">Decimal (e.g., 1.90)</option>
-            </select>
-        </div>
-        <div style="display: flex; gap: 15px;">
+        <div class="section-title">Primary Sportsbook</div>
+        <select id="format1" class="format-select" onchange="updatePlaceholders('1')">
+            <option value="american">American Odds (+/-)</option>
+            <option value="decimal">Decimal Odds (e.g. 1.90)</option>
+        </select>
+        <div style="display: flex; gap: 15px; margin-top: 8px;">
             <div style="flex: 1;">
-                <label>Book 1 Line</label>
+                <label>Line</label>
                 <input type="number" id="fdLine" step="0.5" placeholder="e.g. 20.5">
             </div>
             <div style="flex: 1;">
                 <label>Over Odds</label>
-                <input type="number" step="any" id="fdOver" placeholder="e.g. -115">
+                <input type="number" id="fdOver" step="0.01" placeholder="-115">
             </div>
             <div style="flex: 1;">
                 <label>Under Odds</label>
-                <input type="number" step="any" id="fdUnder" placeholder="e.g. -115">
+                <input type="number" id="fdUnder" step="0.01" placeholder="-115">
             </div>
         </div>
     </div>
@@ -75,30 +93,28 @@
     <!-- TOGGLE FOR SECONDARY BOOK -->
     <div class="toggle-container">
         <input type="checkbox" id="useSecondary" onchange="toggleSecondarySection()">
-        <label for="useSecondary">➕ Factor in a Secondary Sportsbook (e.g., Pinnacle)</label>
+        <label for="useSecondary">➕ Add Secondary Sportsbook (e.g., Pinnacle)</label>
     </div>
 
     <!-- SECONDARY BOOK (OPTIONAL) -->
     <div id="secondarySection" class="secondary-box">
-        <div class="section-header">
-            <div class="section-title">Secondary Sportsbook</div>
-            <select id="sbFormat" class="format-select" onchange="updatePlaceholders('sb')">
-                <option value="american">American (+/-)</option>
-                <option value="decimal" selected>Decimal (e.g., 1.90)</option>
-            </select>
-        </div>
-        <div style="display: flex; gap: 15px;">
+        <div class="section-title">Secondary Sportsbook</div>
+        <select id="format2" class="format-select" onchange="updatePlaceholders('2')">
+            <option value="decimal">Decimal Odds (e.g. 1.90)</option>
+            <option value="american">American Odds (+/-)</option>
+        </select>
+        <div style="display: flex; gap: 15px; margin-top: 8px;">
             <div style="flex: 1;">
-                <label>Book 2 Line</label>
+                <label>Line</label>
                 <input type="number" id="sbLine" step="0.5" placeholder="e.g. 20.5">
             </div>
             <div style="flex: 1;">
                 <label>Over Odds</label>
-                <input type="number" step="any" id="sbOver" placeholder="e.g. 1.85">
+                <input type="number" id="sbOver" step="0.01" placeholder="1.85">
             </div>
             <div style="flex: 1;">
                 <label>Under Odds</label>
-                <input type="number" step="any" id="sbUnder" placeholder="e.g. 1.95">
+                <input type="number" id="sbUnder" step="0.01" placeholder="1.95">
             </div>
         </div>
     </div>
@@ -106,6 +122,10 @@
     <button onclick="calculateEdge()">CALCULATE CONSENSUS EDGE</button>
 
     <div class="result-box" id="resultBox">
+        <div id="warningBox" class="warning-box">
+            ⚠️ <strong>CAUTION: TRAP DETECTED</strong><br>
+            The sportsbook odds entered are heavily juiced (wider than -150 / 1.66). The mathematical edge below might be distorted. Double-check for injury or weather news before trusting this play.
+        </div>
         <h4 style="margin: 0 0 15px 0; text-align: center; color: #aaa;">Consensus True Win Probability</h4>
         <div id="overDiv" class="result-item"></div>
         <div id="underDiv" class="result-item"></div>
@@ -119,34 +139,32 @@
         section.style.display = checkbox.checked ? 'block' : 'none';
     }
 
-    function updatePlaceholders(prefix) {
-        const format = document.getElementById(`${prefix}Format`).value;
-        const overInput = document.getElementById(`${prefix}Over`);
-        const underInput = document.getElementById(`${prefix}Under`);
+    function updatePlaceholders(bookNum) {
+        const format = document.getElementById(`format${bookNum}`).value;
+        const overInput = document.getElementById(bookNum === '1' ? 'fdOver' : 'sbOver');
+        const underInput = document.getElementById(bookNum === '1' ? 'fdUnder' : 'sbUnder');
         
         if (format === 'american') {
-            overInput.placeholder = "e.g. -115";
-            underInput.placeholder = "e.g. -115";
+            overInput.placeholder = "-115";
+            underInput.placeholder = "-115";
         } else {
-            overInput.placeholder = "e.g. 1.90";
-            underInput.placeholder = "e.g. 1.90";
+            overInput.placeholder = "1.85";
+            underInput.placeholder = "1.95";
         }
     }
 
-    // Updated Helper function to handle both American and Decimal Odds
+    // Handles Devig logic based on format selection
     function getImplied(odds, format) {
         if (format === 'decimal') {
-            // Decimal odds implied probability = 1 / decimal_odds
             return 1 / odds;
         } else {
-            // American odds implied probability
             if (odds < 0) return Math.abs(odds) / (Math.abs(odds) + 100);
             if (odds > 0) return 100 / (odds + 100);
             return 0; 
         }
     }
 
-    // Helper function to assign HTML formatting based on Win Percentage
+    // Formats UI output based on your >54.3% strategy
     function formatResult(side, line, winPct) {
         let gradeText, cssClass;
         
@@ -172,10 +190,10 @@
         const ppLine = parseFloat(document.getElementById('ppLine').value);
         
         // Book 1 Inputs
+        const format1 = document.getElementById('format1').value;
         const fdLine = parseFloat(document.getElementById('fdLine').value);
-        const fdOver = parseFloat(document.getElementById('fdOver').value); // Changed to parseFloat for decimals
+        const fdOver = parseFloat(document.getElementById('fdOver').value);
         const fdUnder = parseFloat(document.getElementById('fdUnder').value);
-        const fdFormat = document.getElementById('fdFormat').value;
 
         if (isNaN(ppLine) || isNaN(fdLine) || isNaN(fdOver) || isNaN(fdUnder)) {
             alert("Please fill in PrizePicks and Primary Sportsbook inputs.");
@@ -183,8 +201,8 @@
         }
 
         // 1. Book 1 Calculation
-        const impOver1 = getImplied(fdOver, fdFormat);
-        const impUnder1 = getImplied(fdUnder, fdFormat);
+        const impOver1 = getImplied(fdOver, format1);
+        const impUnder1 = getImplied(fdUnder, format1);
         const totalImp1 = impOver1 + impUnder1;
         
         const trueOver1 = impOver1 / totalImp1;
@@ -210,21 +228,27 @@
         let consensusOver = finalOver1;
         let consensusUnder = finalUnder1;
 
+        // Juice Trap Check Variable
+        let heavyJuiceDetected = false;
+        if (impOver1 > 0.60 || impUnder1 > 0.60) {
+            heavyJuiceDetected = true;
+        }
+
         // 2. Optional Book 2 Calculation
         const useSecondary = document.getElementById('useSecondary').checked;
         if (useSecondary) {
+            const format2 = document.getElementById('format2').value;
             const sbLine = parseFloat(document.getElementById('sbLine').value);
             const sbOver = parseFloat(document.getElementById('sbOver').value);
             const sbUnder = parseFloat(document.getElementById('sbUnder').value);
-            const sbFormat = document.getElementById('sbFormat').value;
 
             if (isNaN(sbLine) || isNaN(sbOver) || isNaN(sbUnder)) {
                 alert("Please complete all fields for the Secondary Sportsbook or uncheck the option.");
                 return;
             }
 
-            const impOver2 = getImplied(sbOver, sbFormat);
-            const impUnder2 = getImplied(sbUnder, sbFormat);
+            const impOver2 = getImplied(sbOver, format2);
+            const impUnder2 = getImplied(sbUnder, format2);
             const totalImp2 = impOver2 + impUnder2;
             
             const trueOver2 = impOver2 / totalImp2;
@@ -250,6 +274,10 @@
             // Blend probabilities equally (Market Consensus)
             consensusOver = (finalOver1 + finalOver2) / 2;
             consensusUnder = (finalUnder1 + finalUnder2) / 2;
+
+            if (impOver2 > 0.60 || impUnder2 > 0.60) {
+                heavyJuiceDetected = true;
+            }
         }
 
         // 3. Convert to Percentages
@@ -260,6 +288,14 @@
         const resultBox = document.getElementById('resultBox');
         const overDiv = document.getElementById('overDiv');
         const underDiv = document.getElementById('underDiv');
+        const warningBox = document.getElementById('warningBox');
+
+        // Show/Hide Warning Box
+        if (heavyJuiceDetected) {
+            warningBox.style.display = 'block';
+        } else {
+            warningBox.style.display = 'none';
+        }
 
         const overRender = formatResult("OVER", ppLine, overPct);
         const underRender = formatResult("UNDER", ppLine, underPct);
